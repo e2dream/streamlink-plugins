@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 from streamlink.exceptions import PluginError
 from streamlink.plugin import Plugin, pluginmatcher
-from streamlink.stream import HLSStream
+from streamlink.stream.hls import HLSStream
 
 log = logging.getLogger(__name__)
 
@@ -23,11 +23,18 @@ class SkylineWebcams(Plugin):
             url = urljoin(self._HD_AUTH_BASE, m.group(1))
             url = url.replace("livee.", "live.")
             log.debug(url)
-            streams = HLSStream.parse_variant_playlist(self.session, url)
-            if not streams:
-                return {"live": HLSStream(self.session, url)}
-            else:
-                return streams
+            
+            # Try to parse as variant playlist first
+            try:
+                streams = HLSStream.parse_variant_playlist(self.session, url)
+                if streams:
+                    return streams
+            except Exception as e:
+                log.debug(f"Failed to parse as variant playlist: {e}")
+            
+            # Fall back to single stream
+            return {"live": HLSStream(self.session, url)}
+            
         elif m:
             raise PluginError("Unexpected source format: {0}".format(m.group(1)))
         else:
