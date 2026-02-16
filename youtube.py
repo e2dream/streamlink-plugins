@@ -11,12 +11,12 @@ $notes VOD content and protected videos are not supported
 """
 
 import json
-import logging
 import re
 import subprocess
 import traceback
 from urllib.parse import urlparse, urlunparse, parse_qs
 
+from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, PluginError, pluginmatcher
 from streamlink.plugin.api import useragents, validate
 from streamlink.stream.ffmpegmux import MuxedStream
@@ -26,7 +26,7 @@ from streamlink.utils.data import search_dict
 from streamlink.utils.parse import parse_json
 
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
 @pluginmatcher(
@@ -137,7 +137,7 @@ class YouTube(Plugin):
         self.session.http.headers.update({"User-Agent": useragents.CHROME})
 
     @classmethod
-    def stream_weight(cls, stream):
+    def stream_weight(cls, stream: str) -> tuple[float, str]:
         match_3d = re.match(r"(\w+)_3d", stream)
         match_hfr = re.match(r"(\d+p)(\d+)", stream)
         if match_hfr:
